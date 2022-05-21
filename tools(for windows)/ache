@@ -1,0 +1,3 @@
+select vdisk file="E:\System\UEFI.vhd" 
+attach vdisk
+list disk
