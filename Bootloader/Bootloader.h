@@ -21,6 +21,7 @@ typedef struct __BootConfigration
     CHAR8 TIMEOUT;/*Seconds*/
     CHAR8 METHOD;/*Reserved*/
     CHAR8 NUMBER;/*Pointer/64*/
+    CHAR8 FileSystemID;
     INT16 _Rsvd_;
 } BootConfigration;
 
