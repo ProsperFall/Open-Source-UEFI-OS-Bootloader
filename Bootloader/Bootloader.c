@@ -15,12 +15,44 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
   EFI_LOADED_IMAGE* ImageInfo = NULL;
   Status = gBS->HandleProtocol(ImageHandle,&gEfiLoadedImageProtocolGuid,(VOID**)&ImageInfo);
   EFI_DEVICE_PATH* BootDevicePath = NULL;
-  Status = gBS->OpenProtocol(ImageInfo->DeviceHandle,&gEfiDevicePathProtocolGuid,(VOID**)&BootDevicePath,ImageHandle,NULL,EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-  //RootPath is ACPI_HID
-  Print(L"%d\n%d\n",BootDevicePath->Type,BootDevicePath->SubType);
+  Status = gBS->HandleProtocol(ImageInfo->DeviceHandle,&gEfiDevicePathProtocolGuid,(VOID**)&BootDevicePath);
   ACPI_HID_DEVICE_PATH* PCI_ROOT = (ACPI_HID_DEVICE_PATH*)BootDevicePath;
-  //PCI_bus_num is PCI_ROOT->UID
-  Print(L"%d\n%d\n",PCI_ROOT->HID,PCI_ROOT->UID);
+  INT32 PCI_BUS = PCI_ROOT->UID;
+  *(INT16*)&BootDevicePath += (UINT64)(UINT16)*BootDevicePath->Length;  //*(INT16*)& cancel displacement caused by cast.
+  //EFI_DEVICE_PATH* BootDeviceRootNode = BootDevicePath; //save node
+  PCI_DEVICE_PATH* PCI_BF = (PCI_DEVICE_PATH*)BootDevicePath;
+  INT32 PCI_DEV =  PCI_BF->Device;
+  INT32 PCI_FUN =  PCI_BF->Function;
+  INT64 PCI_BDF_DISP = (PCI_BUS<<20)|(PCI_DEV<<15)|(PCI_FUN<<12);  //PCI Root
+  INT32 PciNodeCount = 0;
+  do
+  {
+    *(INT16*)&BootDevicePath += (UINT64)(UINT16)*BootDevicePath->Length;  //next node
+    PciNodeCount++;
+    /*
+      record next bus;
+    */
+  } while ((BootDevicePath->Type==HARDWARE_DEVICE_PATH) && (BootDevicePath->SubType==HW_PCI_DP));
+  Print(L"PCI node count: %d\n",PciNodeCount);
+  //EFI_DEVICE_PATH* BootDeviceRootNode = BootDevicePath; //save hd node
+  *(INT16*)&BootDevicePath += (UINT64)(UINT16)*BootDevicePath->Length;//next
+
+  if((BootDevicePath->Type==MESSAGING_DEVICE_PATH)&&(BootDevicePath->SubType==MSG_NVME_NAMESPACE_DP))
+  {
+    //NVME_NAMESPACE_DEVICE_PATH* NvmDevicePath = (NVME_NAMESPACE_DEVICE_PATH*)&BootDevicePath;
+    Print(L"Yes!Yes!Yes!\n");
+  }
+  else if(0)
+  {
+    //if is removable stroge media.
+  }
+  else
+  {
+    //not support
+  }
+  
+
+  Print(L"0x%016lx\n",PCI_BDF_DISP);
   //EFI_FILE_IO_INTERFACE* Volume;
   return EFI_SUCCESS;
 }
