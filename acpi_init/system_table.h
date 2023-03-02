@@ -10,5 +10,5 @@ typedef struct __Root_system_description_ptr__
   uint32_t Length;
   uint64_t XsdtAddr;
   uint8_t ExtendedChecksum;
-  uint8_t __Rsvd[3]
+  uint8_t __Rsvd[3];
 } RSDP;
