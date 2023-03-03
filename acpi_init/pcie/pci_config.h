@@ -18,7 +18,17 @@ typedef struct _pci_config_spce_
 
 typedef struct _pci_config_head_type_0_
 {
-  PciConfigSpaceHead pcihead;
+  uint16_t DeviceID;
+  uint16_t VendorID;
+  uint16_t Status;
+  uint16_t ClassCodeLower16bits;//only little endian(x86)
+  uint8_t ClassCodeUpper8bits;//
+  uint8_t RevisionID;
+  uint8_t BIST;
+  uint8_t HeadType;
+  uint8_t LatencyTimer;
+  uint8_t CacheLineSize;
+  
   uint32_t BaseAddressRegister_1;
   uint32_t BaseAddressRegister_2;
   uint32_t BaseAddressRegister_3;
@@ -40,7 +50,17 @@ typedef struct _pci_config_head_type_0_
 
 typedef struct _pci_config_head_type_1_
 {
-  PciConfigSpaceHead pcihead;
+  uint16_t DeviceID;
+  uint16_t VendorID;
+  uint16_t Status;
+  uint16_t ClassCodeLower16bits;//only little endian(x86)
+  uint8_t ClassCodeUpper8bits;//
+  uint8_t RevisionID;
+  uint8_t BIST;
+  uint8_t HeadType;
+  uint8_t LatencyTimer;
+  uint8_t CacheLineSize;
+  
   uint32_t BaseAddressRegister_1;
   uint32_t BaseAddressRegister_2;
   uint8_t SecondaryLatencyTimer;
