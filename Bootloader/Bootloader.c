@@ -3,15 +3,37 @@
 #include <Library/UefiLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Protocol/LoadedImage.h>
+#include <Guid/Acpi.h>
+#include <Library/BaseMemoryLib.h>
 
 #include <Bootloader.h>
 #include <FileSystem.h>
+#include <acpi_init/system_table.h>
 
 EFI_STATUS Status;
 extern EFI_BOOT_SERVICES* gBS;
-
 EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable  )
 {
+  EFI_CONFIGURATION_TABLE  *EfiConfigurationTable = NULL;
+  BOOLEAN FoundAcpiTable = FALSE;
+  for (UINTN Index = 0; Index < SystemTable->NumberOfTableEntries; Index++) {
+    if (CompareGuid (&gEfiAcpiTableGuid,&(SystemTable->ConfigurationTable[Index].VendorGuid)))
+    {
+      EfiConfigurationTable = &SystemTable->ConfigurationTable[Index];
+      BOOLEAN FoundAcpiTable = TRUE;
+      Print(L"Found! %x\n",EfiConfigurationTable->VendorGuid.Data1);
+      break;
+    }
+  }
+  if(!FoundAcpiTable)
+  {
+    Print(L"None ACPI NotSupport\n");
+    return EFI_UNSUPPORTED;
+  }
+  Print(L"guid:%x",gEfiAcpiTableGuid.Data1);
+  //load acpi table
+
+
   EFI_LOADED_IMAGE* ImageInfo = NULL;
   Status = gBS->HandleProtocol(ImageHandle,&gEfiLoadedImageProtocolGuid,(VOID**)&ImageInfo);
   EFI_DEVICE_PATH* BootDevicePath = NULL;
@@ -34,8 +56,6 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
     */
   } while ((BootDevicePath->Type==HARDWARE_DEVICE_PATH) && (BootDevicePath->SubType==HW_PCI_DP));
   Print(L"PCI node count: %d\n",PciNodeCount);
-  //EFI_DEVICE_PATH* BootDeviceRootNode = BootDevicePath; //save hd node
-  *(INT16*)&BootDevicePath += (UINT64)(UINT16)*BootDevicePath->Length;//next
 
   if((BootDevicePath->Type==MESSAGING_DEVICE_PATH)&&(BootDevicePath->SubType==MSG_NVME_NAMESPACE_DP))
   {
