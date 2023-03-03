@@ -20,8 +20,7 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
     if (CompareGuid (&gEfiAcpiTableGuid,&(SystemTable->ConfigurationTable[Index].VendorGuid)))
     {
       EfiConfigurationTable = &SystemTable->ConfigurationTable[Index];
-      BOOLEAN FoundAcpiTable = TRUE;
-      Print(L"Found! %x\n",EfiConfigurationTable->VendorGuid.Data1);
+      FoundAcpiTable = TRUE;
       break;
     }
   }
@@ -30,7 +29,8 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
     Print(L"None ACPI NotSupport\n");
     return EFI_UNSUPPORTED;
   }
-  Print(L"guid:%x",gEfiAcpiTableGuid.Data1);
+  RSDP* Rsdp = (RSDP*)EfiConfigurationTable->VendorTable;
+  Print(L"XSDT addr:%x",Rsdp->XsdtAddr);
   //load acpi table
 
 
