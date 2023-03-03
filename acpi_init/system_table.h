@@ -28,6 +28,14 @@ typedef struct __System_Descripition_Table_Header__
 
 typedef struct __Extended_System_Descripition_Table__
 {
-  SystemDescripitionTableHeader Header;
+  uint8_t Signature[4];
+  uint32_t Length;
+  uint8_t Revision;
+  uint8_t Checksum;
+  uint8_t OemId[6];
+  uint8_t OemTableId[8];
+  uint32_t OemRevision;
+  uint32_t CreatorId;
+  uint32_t CreatorRevison;
   void* Entry;
 } XSDT;
