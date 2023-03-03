@@ -22,3 +22,7 @@
   gEfiLoadedImageProtocolGuid
   gEfiDevicePathProtocolGuid
   
+[Guids]
+  gEfiAcpiTableGuid
+[BuildOptions]
+  GCC:*_*_*_CC_FLAGS = -w
