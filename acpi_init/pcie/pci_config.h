@@ -7,6 +7,7 @@ typedef struct _pci_config_spce_
   uint16_t DeviceID;
   uint16_t VendorID;
   uint16_t Status;
+  uint16_t Command;
   uint16_t ClassCodeLower16bits;//only little endian(x86)
   uint8_t ClassCodeUpper8bits;//
   uint8_t RevisionID;
@@ -21,6 +22,7 @@ typedef struct _pci_config_head_type_0_
   uint16_t DeviceID;
   uint16_t VendorID;
   uint16_t Status;
+  uint16_t Command;
   uint16_t ClassCodeLower16bits;//only little endian(x86)
   uint8_t ClassCodeUpper8bits;//
   uint8_t RevisionID;
@@ -42,6 +44,7 @@ typedef struct _pci_config_head_type_0_
   uint16_t _Rsvd_;
   uint8_t _Rsvd1_;
   uint8_t CapabilitiesPtr;
+  uint32_t _Rsvd2_;
   uint8_t MAX_Lat;
   uint8_t Min_Gnt;
   uint8_t InterruptPin;
@@ -53,6 +56,7 @@ typedef struct _pci_config_head_type_1_
   uint16_t DeviceID;
   uint16_t VendorID;
   uint16_t Status;
+  uint16_t Command;
   uint16_t ClassCodeLower16bits;//only little endian(x86)
   uint8_t ClassCodeUpper8bits;//
   uint8_t RevisionID;
