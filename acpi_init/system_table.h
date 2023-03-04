@@ -16,7 +16,7 @@ typedef struct __Root_System_Description_Ptr__
 typedef struct __System_Descripition_Table_Header__
 {
   uint8_t Signature[4];
-  uint32_t Length;
+  uint32_t Length;  //bytes,include header
   uint8_t Revision;
   uint8_t Checksum;
   uint8_t OemId[6];
@@ -28,14 +28,20 @@ typedef struct __System_Descripition_Table_Header__
 
 typedef struct __Extended_System_Descripition_Table__
 {
-  uint8_t Signature[4];
-  uint32_t Length;
-  uint8_t Revision;
-  uint8_t Checksum;
-  uint8_t OemId[6];
-  uint8_t OemTableId[8];
-  uint32_t OemRevision;
-  uint32_t CreatorId;
-  uint32_t CreatorRevison;
-  void* Entry;
+  SystemDescripitionTableHeader Header;
+  uint32_t Entry[2];
 } XSDT;
+
+int AcpiTableSignIs(char* ptr1,const char* Sign);
+const CHAR8 McfgSign[4] = {'M','C','F','G'};
+typedef struct __Memort_mapped_Config__
+{
+  SystemDescripitionTableHeader Header;
+  uint8_t _Rsvd[8];
+  uint8_t BassAdressOfEcam[8];  //uint64_t
+  uint8_t PciSegmentGroupNumber[2]; //uint16_t
+  uint8_t StartPciBusNum;
+  uint8_t EndPciBusNum;
+  uint8_t _Rsved[4];
+} MCFG;
+//Length - 36(sizeof(Header)) = EntryCount * 8
