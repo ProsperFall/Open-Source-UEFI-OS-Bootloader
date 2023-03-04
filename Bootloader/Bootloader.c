@@ -16,7 +16,8 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
 {
   EFI_CONFIGURATION_TABLE  *EfiConfigurationTable = NULL;
   BOOLEAN FoundAcpiTable = FALSE;
-  for (UINTN Index = 0; Index < SystemTable->NumberOfTableEntries; Index++) {
+  for (UINTN Index = 0; Index < SystemTable->NumberOfTableEntries; Index++) 
+  {
     if (CompareGuid (&gEfiAcpiTableGuid,&(SystemTable->ConfigurationTable[Index].VendorGuid)))
     {
       EfiConfigurationTable = &SystemTable->ConfigurationTable[Index];
@@ -26,11 +27,28 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
   }
   if(!FoundAcpiTable)
   {
-    Print(L"None ACPI NotSupport\n");
     return EFI_UNSUPPORTED;
   }
   RSDP* Rsdp = (RSDP*)EfiConfigurationTable->VendorTable;
-  Print(L"XSDT addr:%x",Rsdp->XsdtAddr);
+  if(Rsdp->Revision < 2)
+  {
+    return EFI_UNSUPPORTED;
+  }
+  Print(L"XSDT addr:%x\n",Rsdp->XsdtAddr);
+  XSDT* ExtSysDecTable = (XSDT*)(Rsdp->XsdtAddr);
+
+  INT32 EntryCount = (ExtSysDecTable->Header.Length-36)>>3;
+  Print(L"EntryCount: %d\n",EntryCount);
+  UINT64* EntryPtr = (UINT64*)ExtSysDecTable->Entry;
+
+  for(UINTN Index = 0;Index < EntryCount;Index++,EntryPtr++)
+  {
+    if(AcpiTableSignIs(*EntryPtr,&McfgSign)) break;
+  }
+  Print(L"%lx: ",*EntryPtr);
+  Print(L"%lx\n",*(UINT64*)*EntryPtr);
+  MCFG* Mcfg = (MCFG*)*EntryPtr;
+  Print(L"0x%016%\n",(UINT64)*Mcfg->BassAdressOfEcam);
   //load acpi table
 
 
