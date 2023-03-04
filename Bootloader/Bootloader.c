@@ -48,7 +48,7 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
   Print(L"%lx: ",*EntryPtr);
   Print(L"%lx\n",*(UINT64*)*EntryPtr);
   MCFG* Mcfg = (MCFG*)*EntryPtr;
-  Print(L"0x%016%\n",(UINT64)*Mcfg->BassAdressOfEcam);
+  Print(L"0x%016lx%\n",(UINT64)*(UINT64*)Mcfg->BaseAddressOfEcam);//BaseAddressOfEcam
   //load acpi table
 
 
