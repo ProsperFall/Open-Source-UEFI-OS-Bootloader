@@ -8,6 +8,7 @@
 
 [Sources]
   Bootloader.c
+  acpi_init/system_table.c
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
