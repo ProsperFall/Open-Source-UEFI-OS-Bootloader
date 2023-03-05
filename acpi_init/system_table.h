@@ -34,6 +34,7 @@ typedef struct __Extended_System_Descripition_Table__
 
 int AcpiTableSignIs(char* ptr1,const char* Sign);
 const CHAR8 McfgSign[4] = {'M','C','F','G'};
+
 typedef struct __Memort_mapped_Config__
 {
   SystemDescripitionTableHeader Header;
@@ -44,4 +45,12 @@ typedef struct __Memort_mapped_Config__
   uint8_t EndPciBusNum;
   uint8_t _Rsved[4];
 } MCFG;
+typedef struct __Memort_mapped_Config_ECAM_Sub__
+{
+  uint64_t BassAdressOfEcam;  //uint64_t
+  uint16_t PciSegmentGroupNumber[2]; //uint16_t
+  uint8_t StartPciBusNum;
+  uint8_t EndPciBusNum;
+  uint8_t _Rsved[4];
+} ECAM;
 //Length - 36(sizeof(Header)) = EntryCount * 8
