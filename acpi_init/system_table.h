@@ -48,7 +48,7 @@ typedef struct __Memort_mapped_Config__
 typedef struct __Memort_mapped_Config_ECAM_Sub__
 {
   uint64_t BassAdressOfEcam;  //uint64_t
-  uint16_t PciSegmentGroupNumber[2]; //uint16_t
+  uint16_t PciSegmentGroupNumber; //uint16_t
   uint8_t StartPciBusNum;
   uint8_t EndPciBusNum;
   uint8_t _Rsved[4];
