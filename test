@@ -1,0 +1,13 @@
+for(int i = 0;i<PciPathCount;n++)
+	{
+   		for(int n = 0;n<Count;n++)
+   		{
+			if( Bus<Ecam[n].endBus && Bus>Ecam[n].startBus )//找到当前记录总线的ECAM
+			{
+				findEcam = true;
+				BaseAddrEcam = Ecam[n].baseAddr;
+				Bus = getNextBus(BassAddrEcam,FuncN,DevN);//从配置空间读取子总线号并记录
+				break;
+			}
+   		}
+	}
