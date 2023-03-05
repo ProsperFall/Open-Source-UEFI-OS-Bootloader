@@ -25,15 +25,13 @@ typedef struct __System_Descripition_Table_Header__
   uint32_t CreatorId;
   uint32_t CreatorRevison;
 }SystemDescripitionTableHeader;
+//Length - 36(sizeof(Header)) = EntryCount * 8
 
 typedef struct __Extended_System_Descripition_Table__
 {
   SystemDescripitionTableHeader Header;
   uint32_t Entry[2];
 } XSDT;
-
-int AcpiTableSignIs(char* ptr1,const char* Sign);
-const CHAR8 McfgSign[4] = {'M','C','F','G'};
 
 typedef struct __Memort_mapped_Config__
 {
@@ -53,4 +51,6 @@ typedef struct __Memort_mapped_Config_ECAM_Sub__
   uint8_t EndPciBusNum;
   uint8_t _Rsved[4];
 } ECAM;
-//Length - 36(sizeof(Header)) = EntryCount * 8
+
+int AcpiTableSignIs(char* ptr1,const char* Sign);
+const CHAR8 McfgSign[4] = {'M','C','F','G'};
