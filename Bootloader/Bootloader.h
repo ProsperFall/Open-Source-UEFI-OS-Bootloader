@@ -16,6 +16,6 @@ typedef struct __BootConfigration
     uint64_t SysDecPtr;
     uint32_t Guid1;
     uint16_t Guid2;
-    uint16_t Cuid3;
+    uint16_t Guid3;
     uint8_t Guid4[8];
 } BootConfigration;
