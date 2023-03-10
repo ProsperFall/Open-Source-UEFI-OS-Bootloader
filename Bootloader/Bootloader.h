@@ -2,68 +2,20 @@ include <stdint.h>
 
 typedef struct __BootConfigration
 {
-    uint16_t TYPE;
-    uint8_t PARTITION;
-    /*
-        0~127, Boot an system without Open another UEFI_APPLICATION, THIS CAN'T BE '0'
-        <0 Unuseable Boot Configration
-    */
-    CHAR8 LANG;
-    /*
-        VersionSpec
-    */
-    CHAR8 VERSION;
-    CHAR8 TIMEOUT;/*Seconds*/
-    CHAR8 METHOD;/*Reserved*/
-    CHAR8 NUMBER;/*Pointer/64*/
-    CHAR8 FileSystemID;
-    INT16 _Rsvd_;
+    uint16_t type;
+    uint8_t partition;
+    uint8_t number;
+    uint16_t language;
+    uint8_t timeout;
+    uint8_t number;
+    uint8_t FileSysId[4];
+    uint8_t InfoSysReq;
+    uint8_t _Rsvd[3];
+    uint8_t _Rsvd1[16];
+    uint64_t SysPathPtr;
+    uint64_t SysDecPtr;
+    uint32_t Guid1;
+    uint16_t Guid2;
+    uint16_t Cuid3;
+    uint8_t Guid4[8];
 } BootConfigration;
-
-typedef struct __BootConfigration_EFI  //TYPE 1110 0000B
-{
-    BootConfigration Head;
-    CHAR8 BootCongigrationCount;//useable Count,the Count must 128
-    CHAR8 _Rsvd_0;
-    CHAR8 ParameterRequirements;
-    /*
-      1--- ----,SystemTable
-      -1-- ----,ImageHandle
-      ---- ---1,MemoryInfo
-      ---1 ----,ExtParameter
-    */
-    CHAR8 _Rsvd_1;
-    CHAR16 _Rsvd_2;
-    INT32 SystemPathPointer;//(CHAR8*)
-    INT32 DescriptionPointer;
-    INT32 GUID_POINTER;
-    INT32 _Rsvd_;
-} BootConfigration_EFI;
-
-typedef struct __BootConfigration_APP  //TYPE 1110 0001B
-{
-    BootConfigration Head;
-    CHAR8 _Rsvd_0;
-    CHAR8 ExternParameterPtrA8bit;
-    CHAR8 ParameterRequirements;
-    CHAR8 ExternParameterPtrB8bit;
-    CHAR16 ExternParameterPtrC16bit;
-    INT32 SystemPathPointer;//(CHAR8*)
-    INT32 DescriptionPointer;
-    INT32 GUID_POINTER;
-    INT32 _Rsvd_;
-} BootConfigration_APP;
-
-typedef struct __BootConfigration_SYS  //TYPE 0000 0001B
-{
-    BootConfigration Head;
-    CHAR8 _Rsvd_0;
-    CHAR8 ExternParameterPtrA8bit;//low8bit
-    CHAR8 ParameterRequirements;
-    CHAR8 ExternParameterPtrB8bit;//high8bit of low16bit
-    CHAR16 ExternParameterPtrC16bit;//high16bit
-    INT32 SystemPathPointer;//(CHAR8*)
-    INT32 DescriptionPointer;
-    INT32 GUID_POINTER;
-    INT32 _Rsvd_;
-} BootConfigration_SYS;
