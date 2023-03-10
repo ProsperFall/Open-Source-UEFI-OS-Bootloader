@@ -1,14 +1,9 @@
+include <stdint.h>
+
 typedef struct __BootConfigration
 {
-    CHAR8 TYPE;
-    /*
-        1110 0000B:OSU-BL BCD Head
-        1110 0001B:Open an UEFI_APPLICATION with an UefiMain ENTRY_POINT
-        0000 0001B:Boot an system with path of an Volume with File system
-        0000 0000B:None Useable BCD
-        OTHER:Reserved
-    */
-    CHAR8 PARTITION;
+    uint16_t TYPE;
+    uint8_t PARTITION;
     /*
         0~127, Boot an system without Open another UEFI_APPLICATION, THIS CAN'T BE '0'
         <0 Unuseable Boot Configration
