@@ -7,7 +7,7 @@ typedef struct __BootConfigration
     uint8_t number;
     uint16_t language;
     uint8_t timeout;
-    uint8_t number;
+    uint8_t version;
     uint8_t FileSysId[4];
     uint8_t InfoSysReq;
     uint8_t _Rsvd[3];
