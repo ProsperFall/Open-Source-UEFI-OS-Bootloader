@@ -2,19 +2,70 @@
 #include <Library/PcdLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
+#include <Library/BaseMemoryLib.h>
 #include <Protocol/LoadedImage.h>
 #include <Guid/Acpi.h>
-#include <Library/BaseMemoryLib.h>
+#include <Guid/FileInfo.h>
 
 #include <Bootloader.h>
 #include <FileSystem.h>
 #include <acpi_init/system_table.h>
 #include <acpi_init/pcie/pci_config.h>
 
+#include <Imageloader.h>
+
 EFI_STATUS Status;
 extern EFI_BOOT_SERVICES* gBS;
 EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable  )
 {
+  EFI_LOADED_IMAGE* ImageInfo = NULL;
+  Status = gBS->HandleProtocol(ImageHandle,&gEfiLoadedImageProtocolGuid,(VOID**)&ImageInfo);
+  EFI_DEVICE_PATH* BootDevicePath = NULL;
+  Status = gBS->HandleProtocol(ImageInfo->DeviceHandle,&gEfiDevicePathProtocolGuid,(VOID**)&BootDevicePath);
+
+  EFI_FILE_IO_INTERFACE* EfiSystemPartition = NULL;
+  Status = gBS->HandleProtocol(ImageInfo->DeviceHandle,&gEfiSimpleFileSystemProtocolGuid,(VOID**)&EfiSystemPartition);
+
+  EFI_FILE_HANDLE EspRootFolder,BcdFile;
+  Status = EfiSystemPartition->OpenVolume(EfiSystemPartition,&EspRootFolder);
+  Status = EspRootFolder->Open(EspRootFolder,&BcdFile,L"EFI\\Tinsoft\\BCD",EFI_FILE_MODE_READ,0);
+  EFI_FILE_INFO* BcdFileInfo = NULL;
+  UINTN BufSiz = (sizeof(EFI_FILE_INFO)+sizeof(CHAR16) * 100 /*sizeof(L"EFI\\Tinsoft\\BCD")*/ );
+  Status = gBS->AllocatePool(EfiRuntimeServicesData,BufSiz,(VOID*)&BcdFileInfo);
+  Status = EspRootFolder->GetInfo(EspRootFolder,&gEfiFileInfoGuid,&BufSiz,BcdFileInfo);
+  BootConfigration* BootConfigrations = NULL;
+  /*  this is true code
+  Status = gBS->AllocatePool(EfiRuntimeServicesData,BcdFileInfo->FileSize,(VOID*)&BootConfigrations);
+  Status = BcdFile->Read(BcdFile,&BcdFileInfo->FileSize,(VOID*)BootConfigrations);
+  */
+//rm this only test on vm <<
+  Status = gBS->AllocatePool(EfiRuntimeServicesData,608,(VOID*)&BootConfigrations);
+  UINTN aiohjfioaw = 608;
+  Status = BcdFile->Read(BcdFile,&aiohjfioaw,(VOID*)BootConfigrations);
+//rm this only test on vm >>
+  UINT8* p = (UINT8*)BootConfigrations;
+  for(int n = 0; n<4;n++)
+  {
+    for(int i = 0;i < 15;i++)
+    {
+      Print(L"%02x ",*p);
+      p++;
+    }
+    Print(L"\n");
+    p++;
+  }
+//boot 2nd OS test
+  BootConfigrations++;
+  UINT64 sysPtr = BootConfigrations;
+  sysPtr += BootConfigrations->SysPathPtr - 64;
+  CHAR8* SystemPathPtr = sysPtr;
+  EFI_DEVICE_PATH* EfiImage = NULL;
+  Print(L"%s\n",WideChar8(SystemPathPtr));
+  Status = EfiImage = FilePathToDevicePath(ImageInfo->DeviceHandle,WideChar8(SystemPathPtr));
+  EFI_HANDLE NewHandle = NULL;
+  Status = gBS->LoadImage(FALSE,ImageHandle,EfiImage,NULL,0,&NewHandle);
+  Status = gBS->StartImage(NewHandle,0,NULL);
+
   EFI_CONFIGURATION_TABLE  *EfiConfigurationTable = NULL;
   BOOLEAN FoundAcpiTable = FALSE;
   for (UINTN Index = 0; Index < SystemTable->NumberOfTableEntries; Index++) 
@@ -37,7 +88,6 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
   }
   Print(L"XSDT addr:%x\n",Rsdp->XsdtAddr);
   XSDT* ExtSysDecTable = (XSDT*)(Rsdp->XsdtAddr);
-
   INT32 EntryCount = (ExtSysDecTable->Header.Length-36)>>3;
   Print(L"EntryCount: %d\n",EntryCount);
   UINT64* EntryPtr = (UINT64*)ExtSysDecTable->Entry;
@@ -61,10 +111,7 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
   INT32 EcamCount = (Mcfg->Header.Length-44)>>4;
   ECAM* EcamPool = (ECAM*)Mcfg->BaseAddressOfEcam;
 
-  EFI_LOADED_IMAGE* ImageInfo = NULL;
-  Status = gBS->HandleProtocol(ImageHandle,&gEfiLoadedImageProtocolGuid,(VOID**)&ImageInfo);
-  EFI_DEVICE_PATH* BootDevicePath = NULL;
-  Status = gBS->HandleProtocol(ImageInfo->DeviceHandle,&gEfiDevicePathProtocolGuid,(VOID**)&BootDevicePath);
+//
   ACPI_HID_DEVICE_PATH* PCI_ROOT = (ACPI_HID_DEVICE_PATH*)BootDevicePath;
   INT32 PCI_BUS = PCI_ROOT->UID;
   *(INT16*)&BootDevicePath += (UINT64)(UINT16)*BootDevicePath->Length;  //*(INT16*)& cancel displacement caused by cast.
