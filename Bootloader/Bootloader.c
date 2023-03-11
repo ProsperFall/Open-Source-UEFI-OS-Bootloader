@@ -34,26 +34,8 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
   Status = gBS->AllocatePool(EfiRuntimeServicesData,BufSiz,(VOID*)&BcdFileInfo);
   Status = EspRootFolder->GetInfo(EspRootFolder,&gEfiFileInfoGuid,&BufSiz,BcdFileInfo);
   BootConfigration* BootConfigrations = NULL;
-  /*  this is true code
   Status = gBS->AllocatePool(EfiRuntimeServicesData,BcdFileInfo->FileSize,(VOID*)&BootConfigrations);
   Status = BcdFile->Read(BcdFile,&BcdFileInfo->FileSize,(VOID*)BootConfigrations);
-  */
-//rm this only test on vm <<
-  Status = gBS->AllocatePool(EfiRuntimeServicesData,608,(VOID*)&BootConfigrations);
-  UINTN aiohjfioaw = 608;
-  Status = BcdFile->Read(BcdFile,&aiohjfioaw,(VOID*)BootConfigrations);
-//rm this only test on vm >>
-  UINT8* p = (UINT8*)BootConfigrations;
-  for(int n = 0; n<4;n++)
-  {
-    for(int i = 0;i < 15;i++)
-    {
-      Print(L"%02x ",*p);
-      p++;
-    }
-    Print(L"\n");
-    p++;
-  }
 //boot 2nd OS test
   BootConfigrations++;
   UINT64 sysPtr = BootConfigrations;
