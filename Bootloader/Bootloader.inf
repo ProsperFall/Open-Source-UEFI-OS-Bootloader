@@ -1,7 +1,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = Bootloader
-  FILE_GUID                      = 0D432DC4-803B-4BEB-BDCE-0CFC89613C72
+  FILE_GUID                      = <GenYourGUID>
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = UefiMain
@@ -9,6 +9,7 @@
 [Sources]
   Bootloader.c
   acpi_init/system_table.c
+  Imageloader.c
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
@@ -22,8 +23,10 @@
   gEfiBlockIoProtocolGuid
   gEfiLoadedImageProtocolGuid
   gEfiDevicePathProtocolGuid
+  gEfiSimpleFileSystemProtocolGuid
   
 [Guids]
   gEfiAcpiTableGuid
+  gEfiFileInfoGuid
 [BuildOptions]
   GCC:*_*_*_CC_FLAGS = -w
