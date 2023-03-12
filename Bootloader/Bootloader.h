@@ -32,6 +32,7 @@ typedef struct __BootConfigration
     uint8_t FileSysId[4];
     uint8_t InfoSysReq;
     /*
+        1000 0000 BootMgrNeedFix
         0000 0001 SystemTable
         0000 0010 MemoryMap
         0000 0100 BootDeviceBDF
