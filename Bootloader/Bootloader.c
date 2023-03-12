@@ -14,6 +14,8 @@
 
 #include <Imageloader.h>
 
+#define __VM__ 1
+
 EFI_STATUS Status;
 extern EFI_BOOT_SERVICES* gBS;
 EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable  )
@@ -28,25 +30,78 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
 
   EFI_FILE_HANDLE EspRootFolder,BcdFile;
   Status = EfiSystemPartition->OpenVolume(EfiSystemPartition,&EspRootFolder);
-  Status = EspRootFolder->Open(EspRootFolder,&BcdFile,L"EFI\\Tinsoft\\BCD",EFI_FILE_MODE_READ,0);
+  Status = EspRootFolder->Open(EspRootFolder,(VOID**)&BcdFile,L"EFI\\Tinsoft\\BCD",EFI_FILE_MODE_READ,0);
   EFI_FILE_INFO* BcdFileInfo = NULL;
   UINTN BufSiz = (sizeof(EFI_FILE_INFO)+sizeof(CHAR16) * 100 /*sizeof(L"EFI\\Tinsoft\\BCD")*/ );
   Status = gBS->AllocatePool(EfiRuntimeServicesData,BufSiz,(VOID*)&BcdFileInfo);
   Status = EspRootFolder->GetInfo(EspRootFolder,&gEfiFileInfoGuid,&BufSiz,BcdFileInfo);
   BootConfigration* BootConfigrations = NULL;
+#ifndef __VM__
   Status = gBS->AllocatePool(EfiRuntimeServicesData,BcdFileInfo->FileSize,(VOID*)&BootConfigrations);
   Status = BcdFile->Read(BcdFile,&BcdFileInfo->FileSize,(VOID*)BootConfigrations);
-//boot 2nd OS test
-  BootConfigrations++;
-  UINT64 sysPtr = BootConfigrations;
-  sysPtr += BootConfigrations->SysPathPtr - 64;
-  CHAR8* SystemPathPtr = sysPtr;
+#endif
+#ifdef __VM__
+  Status = gBS->AllocatePool(EfiRuntimeServicesData,608,(VOID*)&BootConfigrations);
+  UINTN aiohjfioaw = 608;
+  Status = BcdFile->Read(BcdFile,&aiohjfioaw,(VOID*)BootConfigrations);
+#endif
+  BootConfigrationHead* BootConfigBaseAddr = (BootConfigrationHead*)BootConfigrations;
+  UINT8* p = (UINT8*)BootConfigrations;
+  for(int n = 0; n<4;n++)
+  {
+    for(int i = 0;i < 15;i++)
+    {
+      Print(L"%02x ",*p);
+      p++;
+    }
+    Print(L"\n");
+    p++;
+  }
+  if((BootConfigBaseAddr->select ==0)||(BootConfigBaseAddr->select > BootConfigBaseAddr->number)) goto WalkThroughBCD;//bad BCD Head
+  BootConfigrations += (UINT64)BootConfigBaseAddr->select;
+  CHAR16* ExcFile = WideChar8((CHAR8*)(BootConfigrations->SysPathPtr + (UINT64)BootConfigBaseAddr));
   EFI_DEVICE_PATH* EfiImage = NULL;
-  Print(L"%s\n",WideChar8(SystemPathPtr));
-  Status = EfiImage = FilePathToDevicePath(ImageInfo->DeviceHandle,WideChar8(SystemPathPtr));
   EFI_HANDLE NewHandle = NULL;
-  Status = gBS->LoadImage(FALSE,ImageHandle,EfiImage,NULL,0,&NewHandle);
-  Status = gBS->StartImage(NewHandle,0,NULL);
+  //test sepc
+  if(FileExist(ExcFile,EspRootFolder))
+  {
+    switch (BootConfigrations->type)
+    {
+    case UEFI_APPLICATION:
+      Print(L"%s\n",ExcFile);
+      Status = EfiImage = FilePathToDevicePath(ImageInfo->DeviceHandle,ExcFile);
+      Status = gBS->FreePool((VOID*)ExcFile);
+      Status = gBS->LoadImage(FALSE,ImageHandle,EfiImage,NULL,0,&NewHandle);
+      Status = gBS->StartImage(NewHandle,0,NULL);
+      return EFI_SUCCESS;
+      break;
+    default:
+      break;
+    }
+  }
+WalkThroughBCD:
+  BootConfigrations = (BootConfigration*)BootConfigBaseAddr;
+  //find closest
+  for(UINTN Index = 1;Index < BootConfigBaseAddr->number;Index++,BootConfigrations++)
+  {
+    if(BootConfigrations->type)
+    {
+      switch (BootConfigrations[Index].type)
+      {
+      case UEFI_APPLICATION:
+        Status = EfiImage = FilePathToDevicePath(ImageInfo->DeviceHandle,ExcFile);
+        Status = gBS->FreePool((VOID*)ExcFile);
+        Status = gBS->LoadImage(FALSE,ImageHandle,EfiImage,NULL,0,&NewHandle);
+        Status = gBS->StartImage(NewHandle,0,NULL);
+        return EFI_SUCCESS;
+        break;
+      case OPERATE_SYS:
+        
+      default:
+        break;
+      }
+    }
+  }
 
   EFI_CONFIGURATION_TABLE  *EfiConfigurationTable = NULL;
   BOOLEAN FoundAcpiTable = FALSE;
