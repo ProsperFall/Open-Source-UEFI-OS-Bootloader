@@ -13,7 +13,7 @@
 #include <acpi_init/pcie/pci_config.h>
 
 #include <Imageloader.h>
-
+//use this if test on vmware
 #define __VM__ 1
 
 EFI_STATUS Status;
@@ -41,8 +41,9 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
   Status = BcdFile->Read(BcdFile,&BcdFileInfo->FileSize,(VOID*)BootConfigrations);
 #endif
 #ifdef __VM__
-  Status = gBS->AllocatePool(EfiRuntimeServicesData,608,(VOID*)&BootConfigrations);
-  UINTN aiohjfioaw = 608;
+#define BCDSize 608
+  Status = gBS->AllocatePool(EfiRuntimeServicesData,BCDSize,(VOID*)&BootConfigrations);
+  UINTN aiohjfioaw = BCDSize;
   Status = BcdFile->Read(BcdFile,&aiohjfioaw,(VOID*)BootConfigrations);
 #endif
   BootConfigrationHead* BootConfigBaseAddr = (BootConfigrationHead*)BootConfigrations;
