@@ -57,11 +57,12 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
     Print(L"\n");
     p++;
   }
-  if((BootConfigBaseAddr->select ==0)||(BootConfigBaseAddr->select > BootConfigBaseAddr->number)) goto WalkThroughBCD;//bad BCD Head
-  BootConfigrations += (UINT64)BootConfigBaseAddr->select;
-  CHAR16* ExcFile = WideChar8((CHAR8*)(BootConfigrations->SysPathPtr + (UINT64)BootConfigBaseAddr));
+  CHAR16* ExcFile = NULL;
   EFI_DEVICE_PATH* EfiImage = NULL;
   EFI_HANDLE NewHandle = NULL;
+  if((BootConfigBaseAddr->select ==0)||(BootConfigBaseAddr->select > BootConfigBaseAddr->number)) goto WalkThroughBCD;//bad BCD Head
+  BootConfigrations += (UINT64)BootConfigBaseAddr->select;
+  ExcFile = WideChar8((CHAR8*)(BootConfigrations->SysPathPtr + (UINT64)BootConfigBaseAddr));
   //test sepc
   if(FileExist(ExcFile,EspRootFolder))
   {
@@ -75,20 +76,25 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
       Status = gBS->StartImage(NewHandle,0,NULL);
       return EFI_SUCCESS;
       break;
+    case OPERATE_SYS:
+      break;
     default:
       break;
     }
   }
 WalkThroughBCD:
   BootConfigrations = (BootConfigration*)BootConfigBaseAddr;
+  BootConfigrations++;
   //find closest
   for(UINTN Index = 1;Index < BootConfigBaseAddr->number;Index++,BootConfigrations++)
   {
     if(BootConfigrations->type)
     {
-      switch (BootConfigrations[Index].type)
+      switch (BootConfigrations->type)
       {
       case UEFI_APPLICATION:
+        ExcFile = WideChar8((CHAR8*)(BootConfigrations->SysPathPtr + (UINT64)BootConfigBaseAddr));
+        Print(L"%s\n",ExcFile);
         Status = EfiImage = FilePathToDevicePath(ImageInfo->DeviceHandle,ExcFile);
         Status = gBS->FreePool((VOID*)ExcFile);
         Status = gBS->LoadImage(FALSE,ImageHandle,EfiImage,NULL,0,&NewHandle);
@@ -96,7 +102,7 @@ WalkThroughBCD:
         return EFI_SUCCESS;
         break;
       case OPERATE_SYS:
-        
+        break;
       default:
         break;
       }
