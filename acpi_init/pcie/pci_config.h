@@ -47,9 +47,6 @@ typedef struct _pci_config_head_type_0_
   uint8_t InterruptPin;
   uint8_t Min_Gnt;
   uint8_t MAX_Lat;
-
-
-
 } PciConfigSpaceDevice;
 
 typedef struct _pci_config_head_type_1_
