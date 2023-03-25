@@ -10,6 +10,7 @@
   Bootloader.c
   acpi_init/system_table.c
   Imageloader.c
+  nvm_pcie/lite_nvm.c
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
