@@ -13,8 +13,10 @@
 #include <acpi_init/pcie/pci_config.h>
 
 #include <Imageloader.h>
-//use this if test on vmware
+#include <nvm_pcie/lite_nvm.h>
+
 #define __VM__ 1
+#define __ORGIN_BOOT__ 1
 
 EFI_STATUS Status;
 extern EFI_BOOT_SERVICES* gBS;
@@ -24,7 +26,9 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
   Status = gBS->HandleProtocol(ImageHandle,&gEfiLoadedImageProtocolGuid,(VOID**)&ImageInfo);
   EFI_DEVICE_PATH* BootDevicePath = NULL;
   Status = gBS->HandleProtocol(ImageInfo->DeviceHandle,&gEfiDevicePathProtocolGuid,(VOID**)&BootDevicePath);
-
+#ifdef __ORGIN_BOOT__
+  goto BootDriectly;
+#endif
   EFI_FILE_IO_INTERFACE* EfiSystemPartition = NULL;
   Status = gBS->HandleProtocol(ImageInfo->DeviceHandle,&gEfiSimpleFileSystemProtocolGuid,(VOID**)&EfiSystemPartition);
 
@@ -41,9 +45,8 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
   Status = BcdFile->Read(BcdFile,&BcdFileInfo->FileSize,(VOID*)BootConfigrations);
 #endif
 #ifdef __VM__
-#define BCDSize 608
-  Status = gBS->AllocatePool(EfiRuntimeServicesData,BCDSize,(VOID*)&BootConfigrations);
-  UINTN aiohjfioaw = BCDSize;
+  Status = gBS->AllocatePool(EfiRuntimeServicesData,608,(VOID*)&BootConfigrations);
+  UINTN aiohjfioaw = 32768; //  32kb
   Status = BcdFile->Read(BcdFile,&aiohjfioaw,(VOID*)BootConfigrations);
 #endif
   BootConfigrationHead* BootConfigBaseAddr = (BootConfigrationHead*)BootConfigrations;
@@ -78,8 +81,10 @@ EFI_STATUS EFIAPI UefiMain ( IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Sys
       return EFI_SUCCESS;
       break;
     case OPERATE_SYS:
+        goto BootDriectly;
       break;
     default:
+      goto WalkThroughBCD; //bad BCD head
       break;
     }
   }
@@ -96,20 +101,26 @@ WalkThroughBCD:
       case UEFI_APPLICATION:
         ExcFile = WideChar8((CHAR8*)(BootConfigrations->SysPathPtr + (UINT64)BootConfigBaseAddr));
         Print(L"%s\n",ExcFile);
-        Status = EfiImage = FilePathToDevicePath(ImageInfo->DeviceHandle,ExcFile);
-        Status = gBS->FreePool((VOID*)ExcFile);
-        Status = gBS->LoadImage(FALSE,ImageHandle,EfiImage,NULL,0,&NewHandle);
-        Status = gBS->StartImage(NewHandle,0,NULL);
+        if(FileExist(ExcFile,EspRootFolder))
+        {
+          Status = EfiImage = FilePathToDevicePath(ImageInfo->DeviceHandle,ExcFile);
+          Status = gBS->FreePool((VOID*)ExcFile);
+          Status = gBS->LoadImage(FALSE,ImageHandle,EfiImage,NULL,0,&NewHandle);
+          Status = gBS->StartImage(NewHandle,0,NULL);
+        }
         return EFI_SUCCESS;
         break;
       case OPERATE_SYS:
+        goto BootDriectly;
         break;
       default:
+        //rsvd typ
         break;
       }
     }
   }
-
+  return EFI_NOT_FOUND; //debug
+BootDriectly:
   EFI_CONFIGURATION_TABLE  *EfiConfigurationTable = NULL;
   BOOLEAN FoundAcpiTable = FALSE;
   for (UINTN Index = 0; Index < SystemTable->NumberOfTableEntries; Index++) 
@@ -165,6 +176,7 @@ WalkThroughBCD:
   INT64 PCI_BDF_DISP;
   INT32 PciNodeCount = 0;
   PciConfigSpaceBridge* PciConfig1 = NULL;
+  //get Disk BDF
   do
   {
     PCI_BF = (PCI_DEVICE_PATH*)BootDevicePath;
@@ -178,6 +190,7 @@ WalkThroughBCD:
         PciConfig1 = (UINT64)EcamPool[Index].BassAdressOfEcam;
         Print(L"ecam::0x%016lx\n",(UINT64)EcamPool[Index].BassAdressOfEcam);
         PciConfig1 = (UINT64)PciConfig1 | PCI_BDF_DISP;
+        PciConfig1->Command |=( MEM_SPACE | BUS_MASTER );  // enable PCIe Bus Function
         Print(L"PciConfigAddr:0x%016lx\n",PciConfig1);
         PCI_BUS = PciConfig1->SubordinateBusNumber;
         break;
@@ -186,13 +199,17 @@ WalkThroughBCD:
     *(INT16*)&BootDevicePath += (UINT64)(UINT16)*BootDevicePath->Length;  //next node
     PciNodeCount++;
   } while ((BootDevicePath->Type==HARDWARE_DEVICE_PATH) && (BootDevicePath->SubType==HW_PCI_DP));
-  //get Disk BDF
-
+  PciConfig1->Command |=( MEM_SPACE | BUS_MASTER | INTERRUPT_DISABLE);  //enable PCIe Device Function
   Print(L"PCI node count: %d\n",PciNodeCount);
-  //Print(L"PCI Head Type: %d\n",PciConfig1->HeadType);
+
   if((BootDevicePath->Type==MESSAGING_DEVICE_PATH)&&(BootDevicePath->SubType==MSG_NVME_NAMESPACE_DP))
   {
     //NVME_NAMESPACE_DEVICE_PATH* NvmDevicePath = (NVME_NAMESPACE_DEVICE_PATH*)&BootDevicePath;
+    //UEFI BootServices may not useable if execute this
+    initNvm(PciConfig1);
+    setPageSize(4096);
+    CreateIoSubmissionQueue(1,64);
+    Print(L"AdminSubQueueBaseAddress:%016lx\nAdminComQueueBaseAddress:%016lx\nController Capabilities:%016lx\nDoorBellStep:%016lx\n",getAdminSubQueueBaseAddress(),getAdminComQueueBaseAddress(),debug(),getDoorBellStep());
     Print(L"Nvm!\n");
   }
   else if(0)
@@ -203,7 +220,6 @@ WalkThroughBCD:
   {
     //not support
   }
-  
 
   Print(L"0x%016lx\n",PCI_BDF_DISP);
   //EFI_FILE_IO_INTERFACE* Volume;
