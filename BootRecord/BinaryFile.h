@@ -1,0 +1,8 @@
+/*
+    
+
+*/
+typedef struct
+{
+
+} BinaryBootRecord;
